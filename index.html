@@ -180,138 +180,190 @@
 
     <script>
         const notebookData = [
-            {
-                type: 'markdown',
-                content: '## A-Star'
-            },
-            {
-                type: 'code',
-                content: `def get(graph, a, b=None):\n    links = graph.setdefault(a, {})\n    if b is None:\n        return links\n    else:\n        return links.get(b, float('inf'))\n\nclass Node:\n    def __init__(self, name: str, parent=None):\n        self.name = name\n        self.parent = parent\n        self.g = 0\n        self.h = 0\n        self.f = 0\n\n    def __eq__(self, other):\n        return self.name == other.name\n\n    def __lt__(self, other):\n        return self.f < other.f\n\n    def __repr__(self):\n        return f"({self.name}, {self.f})"\n\ndef add_to_open(open_list, neighbor):\n    for node in open_list:\n        if neighbor == node and neighbor.f >= node.f:\n            return False\n    return True\n\ndef astar_search(graph, heuristics, start, end):\n    open_list = []\n    closed_list = []\n    start_node = Node(start, None)\n    goal_node = Node(end, None)\n    open_list.append(start_node)\n    while len(open_list) > 0:\n        open_list.sort()\n        current_node = open_list.pop(0)\n        closed_list.append(current_node)\n        if current_node == goal_node:\n            path = []\n            while current_node is not None:\n                path.append(f"{current_node.name}:{current_node.g}")\n                current_node = current_node.parent\n            return path[::-1]\n        neighbors = graph.get(current_node.name, {})\n        for key, value in neighbors.items():\n            neighbor = Node(key, current_node)\n            if neighbor in closed_list:\n                continue\n            neighbor.g = current_node.g + get(graph, current_node.name, neighbor.name)\n            neighbor.h = heuristics.get(neighbor.name, float('inf'))\n            neighbor.f = neighbor.g + neighbor.h\n            if add_to_open(open_list, neighbor):\n                open_list.append(neighbor)\n    return None`
-            },
-            {
-                type: 'markdown',
-                content: '## All Path Finder'
-            },
-            {
-                type: 'code',
-                content: `def all_paths(graph, start, end, path=[]):\n    path = path + [start]\n    if start == end:\n        return [path]\n    if start not in graph:\n        return []\n    paths = []\n    for node in graph[start]:\n        if node not in path:\n            new_paths = all_paths(graph, node, end, path)\n            for new_path in new_paths:\n                paths.append(new_path)\n    return paths\n\ndef input_graph():\n    graph = {}\n    print("Enter the graph (enter 'done' when finished):")\n    while True:\n        node = input("Enter a node (or 'done' to finish): ")\n        if node.lower() == 'done':\n            break\n        connections = input(f"Enter connections from node {node} (comma-separated): ").split(',')\n        connections = [c.strip() for c in connections if c.strip()]\n        graph[node] = connections\n    return graph\n\n# Get user input\nprint("Graph Path Finder")\ngraph = input_graph()\nstart_node = input("Enter the start node: ")\nend_node = input("Enter the end node: ")\n\n# Find and display all paths\nresult_paths = all_paths(graph, start_node, end_node)\n\nprint(f"\\nAll paths from {start_node} to {end_node}:")\nif not result_paths:\n    print("No paths found")\nelse:\n    for i, path in enumerate(result_paths, 1):\n        print(f"{i}. {path}")`
-            },
-            {
-                type: 'markdown',
-                content: '## Alpha-Beta'
-            },
-            {
-                type: 'markdown',
-                content: '## BFS'
-            },
-            {
-                type: 'code',
-                content: `from collections import deque\n\ndef bfs(graph, start, goal):\n    q = deque([(start, [start])])\n    visited = set()\n    trav_seq = []\n\n    while q:\n        node, path = q.popleft()\n        if node not in visited:\n            visited.add(node)\n            trav_seq.append(node)\n\n            if node == goal:\n                return trav_seq, path\n\n            for adj in graph.get(node, []):\n                if adj not in visited:\n                    q.append((adj, path + [adj]))\n    return trav_seq, None\n\ngraph = {\n    'A': ['B', 'C'],\n    'B': ['D', 'E'],\n    'C': ['F'],\n    'D': [],\n    'E': ['F'],\n    'F': []\n}\n\nstart_node = 'A'\nend_node = 'F'\n\ntraversal, path = bfs(graph, start_node, end_node)\n\nif path:\n    print("BFS Traversal Sequence:", traversal)\n    print("Solution Path:", path)\nelse:\n    print("BFS Traversal Sequence:", traversal)\n    print("No path found from", start_node, "to", end_node)`
-            },
-            {
-                type: 'markdown',
-                content: '## Crossover (genetic)'
-            },
-            {
-                type: 'code',
-                content: `def crossover(s1, s2, start, end):\n    s1 = str(s1)\n    s2 = str(s2)\n    s1_list = list(s1)\n    s2_list = list(s2)\n\n    s1_list[start:end], s2_list[start:end] = s2_list[start:end], s1_list[start:end]\n\n    child_s1 = ''.join(s1_list)\n    child_s2 = ''.join(s2_list)\n\n    return child_s1, child_s2\n\ns1 = int(input("Enter the first parent: "))\ns2 = int(input("Enter the second parent: "))\nstart = int(input("Enter the start index: "))\nend = int(input("Enter the end index: "))\nchild_s1, child_s2 = crossover(s1, s2, start, end)\nprint(f"Original s1: {s1}, Original s2: {s2}")\nprint(f"Child s1: {child_s1}, Child s2: {child_s2}")`
-            },
-            {
-                type: 'markdown',
-                content: '## CSP'
-            },
-            {
-                type: 'code',
-                content: `pip install python-constraint\nfrom IPython import get_ipython\nfrom IPython.display import display\nimport constraint\n\nx_min = int(input("Enter minimum value for x : "))\nx_max = int(input("Enter maximum value for x : "))\ny_min = int(input("Enter minimum value for y : "))\ny_max = int(input("Enter maximum value for y : "))\n\nproblem = constraint.Problem()\nproblem.addVariable('x', range(x_min, x_max + 1))\nproblem.addVariable('y', range(y_min, y_max + 1))\n\ndef our_constraint(x,y):\n    if x+y >= 20:\n        return True\n\nproblem.addConstraint(our_constraint, ['x','y'])\nsolutions = problem.getSolutions()\nlength = len(solutions)\nprint("(x,y) =\\n", end = "")\nfor index, solution in enumerate(solutions):\n    print("({},{})".format(solution['x'], solution['y']), end="")\n    if index == length - 1:\n        break\n    print(",")\nprint("}")`
-            },
-            {
-                type: 'markdown',
-                content: '## Crypt Arithmetic'
-            },
-            {
-                type: 'code',
-                content: `import itertools\n\ndef get_value(word, substitution):\n    s = 0\n    factor = 1\n    for letter in reversed(word):\n        s += factor * substitution[letter]\n        factor *= 10\n    return s\n\ndef solve2(equation):\n    left, right = equation.lower().replace(' ', '').split('=')\n    left = left.split('+')\n    letters = set(right)\n    for word in left:\n        for letter in word:\n            letters.add(letter)\n    letters = list(letters)\n    digits = range(10)\n    for perm in itertools.permutations(digits, len(letters)):\n        sol = dict(zip(letters, perm))\n        if sum(get_value(word, sol) for word in left) == get_value(right, sol):\n            print('+'.join(str(get_value(word, sol)) for word in left) + " = {} (mapping: {})".format(get_value(right, sol), sol))\n\nequation = input("Enter the cryptarithmetic equation (e.g., SEND+MORE=MONEY): ")\nsolve2(equation)`
-            },
-            {
-                type: 'markdown',
-                content: '## Graph Connection'
-            },
-            {
-                type: 'code',
-                content: `def dfs(graph, node, visited):\n    visited.add(node)\n    for neighbor in graph.get(node, []):\n        if neighbor not in visited:\n            dfs(graph, neighbor, visited)\n\ndef is_connected(graph):\n    nodes = list(graph.keys())\n    if not nodes:\n        return True\n    visited = set()\n    dfs(graph, nodes[0], visited)\n    return len(visited) == len(nodes)\n\ndef get_graph_from_user():\n    graph = {}\n    n = int(input("Enter the number of Nodes: "))\n\n    for _ in range(n):\n        node = input("Enter the node name: ")\n        neighbors = input(f"Enter the neighbors of {node} (comma-separated): ").split(",")\n        neighbors = [neighbor.strip() for neighbor in neighbors]\n        graph[node] = neighbors\n\n    print(graph)\n    if is_connected(graph):\n        print("The graph is connected.")\n    else:\n        print("The graph is disconnected.")\n\nget_graph_from_user()`
-            },
-            {
-                type: 'markdown',
-                content: '## Kronecker Problem'
-            },
-            {
-                type: 'code',
-                content: `ra=int(input("enter no of rows"))\nca=int(input("enter no of columns"))\na=[]\nfor i in range(ra):\n  row = []\n  for j in range(ca):\n    xa=int(input("enter element"))\n    row.append(xa)\n  a.append(row)\nrb=int(input("enter no of rows"))\ncb=int(input("enter no of columns"))\nb=[]\nfor i in range(rb):\n  row=[]\n  for j in range(cb):\n    xb=int(input("enter element"))\n    row.append(xb)\n  b.append(row)\nres=[]\nfor ia in a:\n  for ea in ia:\n    temp=[]\n    for ib in b:\n      for eb in ib:\n        temp.append(ea*eb)\n    res.append(temp)\nprint(res)`
-            },
-            {
-                type: 'markdown',
-                content: '## Magic Square'
-            },
-            {
-                type: 'code',
-                content: `r=int(input("enter odd no of rows and columns"))\na=[]\nfor i in range(r):\n  row = []\n  for j in range(r):\n    x=int(input("enter element"))\n    row.append(x)\n  a.append(row)\n\ndef res(a):\n  T= r*(r**2 + 1)/2\n  sumr=0\n  sumc=0\n  sumd1=0\n  sumd2=0\n  for i in range(r):\n    sumd1+=a[i][i]\n    sumd2+=a[i][r-i-1]\n  if not(sumd1==sumd2):\n    return False\n  for j in range(r):\n    sumr+=a[i][j]\n    sumc+=a[j][i]\n  if sumr==sumc==sumd1==sumd2==T:\n    return True\n  else:\n    return False\n\nmagic=res(a)\nif magic:\n  print("IT IS MAGIC SQUARE")\nelse:\n  print("NOT MAGIC SQUARE")`
-            },
-            {
-                type: 'markdown',
-                content: '## Mice and Hole Problem'
-            },
-            {
-                type: 'code',
-                content: `k=[]\nc=[]\nn=int(input("enter how many kids:"))\nprint("enter the positions of kids:")\nfor i in range(n):\n    a=int(input())\n    k.append(a)\nprint("enter the position of chocolate shelf:")\nfor i in range(n):\n    b=int(input())\n    c.append(b)\nk.sort()\nc.sort()\ndiff=[]\nfor i in range(n):\n    d=abs(k[i]-c[i])\n    diff.append(d)\n\nfor i in range(n):\n    print("kid ",i+1," has moved ",diff[i]," steps to reach chocolate at position ",c[i]," from ",k[i])\nprint("the maximum time taken by those kids to reach their shelves is:",max(diff))`
-            },
-            {
-                type: 'markdown',
-                content: '## MiniMax'
-            },
-            {
-                type: 'code',
-                content: `import math\n\ndef minimax(cur_depth, node_index, max_turn, scores, target_depth, b_factor):\n    if cur_depth == target_depth:\n        return scores[node_index]\n    if (max_turn):\n        largest = None\n        for i in range(b_factor):\n            index = node_index * b_factor + i\n            if index >= len(scores):\n                continue\n            cur = minimax(cur_depth + 1, index, False, scores, target_depth, b_factor)\n            if largest is None or cur > largest:\n                largest = cur\n        return largest\n    else:\n        smallest = None\n        for i in range(b_factor):\n            index = node_index * b_factor + i\n            if index >= len(scores):\n                continue\n            cur = minimax(cur_depth + 1, index, True, scores, target_depth, b_factor)\n            if smallest is None or cur < smallest:\n                smallest = cur\n        return smallest\n\nscores = [int(s) for s in input("Enter the scores: ").split()]\nb_factor = int(input("enter the branching factor: "))\nplayer = int(input("maximizer or minimizer? (Enter 1 for maximizer and 0 for minimizer): "))\nprint(player)\ntree_depth = math.ceil(math.log(len(scores), b_factor))\nprint("the optimal value is:", end="")\nprint(minimax(0, 0, player, scores, tree_depth, b_factor))`
-            },
-            {
-                type: 'markdown',
-                content: '## Path in Matrix'
-            },
-            {
-                type: 'code',
-                content: `mat = [\n        [1,2,3],\n        [4,7,8],\n        [9,2,5],\n    ]\nV=3\nsum=0\nmax=-1\nfor j in range(V):\n  for i in range(V):\n    if max<mat[i][j]:\n      max=mat[i][j]\n  print(max,end=\" \")\n  sum+=max\n  max=-1\nprint('\\n')\nprint("Sum of the path",sum)`
-            },
-            {
-                type: 'markdown',
-                content: '## Rotten Oranges'
-            },
-            {
-                type: 'code',
-                content: `from collections import deque\n\ndef orangesRotting(grid):\n    if not grid:\n        return -1\n\n    rows, cols = len(grid), len(grid[0])\n    queue = deque()\n    fresh_count = 0\n\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] == 2:\n                queue.append((r, c))\n            elif grid[r][c] == 1:\n                fresh_count += 1\n\n    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]\n    minutes = 0\n\n    while queue and fresh_count > 0:\n        for _ in range(len(queue)):\n            x, y = queue.popleft()\n            for dx, dy in directions:\n                nx, ny = x + dx, y + dy\n                if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == 1:\n                    grid[nx][ny] = 2\n                    fresh_count -= 1\n                    queue.append((nx, ny))\n        minutes += 1\n\n    return minutes if fresh_count == 0 else -1\n\nrows = int(input("Enter the number of rows: "))\ncols = int(input("Enter the number of columns: "))\n\ngrid = []\nprint("Enter the grid elements row-wise (0 for empty, 1 for fresh, 2 for rotten):")\nfor _ in range(rows):\n    row = list(map(int, input().split()))\n    grid.append(row)\n\nresult = orangesRotting(grid)\nprint("Minimum time to rot all oranges:", result)`
-            },
-            {
-                type: 'markdown',
-                content: '## Sparse Matrix'
-            },
-            {
-                type: 'code',
-                content: `def analyze_matrix(matrix):\n    if not matrix:\n        return 0, 0\n\n    n = len(matrix)\n    visited = [[False] * n for _ in range(n)]\n    max_zeros = 0\n    island_count = 0\n\n    def dfs(x, y, is_zero_patch):\n        if x < 0 or x >= n or y < 0 or y >= n or visited[x][y]:\n            return 0\n        if (is_zero_patch and matrix[x][y] == 1) or (not is_zero_patch and matrix[x][y] == 0):\n            return 0\n\n        visited[x][y] = True\n        count = 1\n\n        count += dfs(x + 1, y, is_zero_patch)\n        count += dfs(x - 1, y, is_zero_patch)\n        count += dfs(x, y + 1, is_zero_patch)\n        count += dfs(x, y - 1, is_zero_patch)\n        return count\n\n    for i in range(n):\n        for j in range(n):\n            if matrix[i][j] == 0 and not visited[i][j]:\n                max_zeros = max(max_zeros, dfs(i, j, True))\n            elif matrix[i][j] == 1 and not visited[i][j]:\n                island_count += 1\n                dfs(i, j, False)\n\n    return max_zeros, island_count\n\nmatrix = [\n    [1, 0, 0, 1, 1],\n    [0, 0, 1, 0, 0],\n    [1, 0, 0, 0, 1],\n    [1, 1, 1, 0, 0],\n    [0, 0, 0, 1, 1]\n]\n\nlargest_patch, number_of_islands = analyze_matrix(matrix)\nprint("The largest patch of zeros has size:", largest_patch)\nprint("The number of islands is:", number_of_islands)`
-            },
-            {
-                type: 'markdown',
-                content: '## Tic-Tac-Toe'
-            },
-            {
-                type: 'code',
-                content: `def tic_tac_toe(mat):\n    x,o = 0,0\n    coord = []\n    for i in range(3):\n        for j in range(3):\n            if mat[i][j]==1:\n                x+=1\n            elif mat[i][j]==2:\n                o+=1\n            else:\n                coord.append([i,j])\n    return "Player X" if o>x else "Player O",coord\n\nmatrix = [[1, 0, 2],[0, 2, 0],[1, 0, 1]]\nmove,coord = tic_tac_toe(matrix)\nprint("Next Move Belongs to",move)\nprint("Available Moves :",coord)`
-            },
-            {
-                type: 'markdown',
-                content: '## Water Connection'
-            },
-            {
-                type: 'code',
-                content: `def find_min_weight_paths(num_nodes, connections):\n\n    parents = [0] * (num_nodes + 1)\n    weights = [0] * (num_nodes + 1)\n    children = [0] * (num_nodes + 1)\n\n    for start, end, weight in connections:\n        children[start] = end\n        weights[start] = weight\n        parents[end] = start\n\n    min_weight_paths = []\n    for node in range(1, num_nodes + 1):\n        if parents[node] == 0 and children[node]:  # Check if it's a root node with children.\n            min_weight = float('inf')\n            current_node = node\n\n            while children[current_node] != 0:\n                min_weight = min(min_weight, weights[current_node])\n                current_node = children[current_node]\n\n            min_weight_paths.append((node, current_node, min_weight))\n\n    return min_weight_paths\n\nif __name__ == "__main__":\n    num_nodes = int(input("Enter the number of nodes: "))\n    num_connections = int(input("Enter the number of connections: "))\n\n    connections = []\n    print("Enter the connections (start_node end_node weight) one by one:")\n    for _ in range(num_connections):\n        start, end, weight = map(int, input().split())\n        connections.append((start, end, weight))\n\n    paths = find_min_weight_paths(num_nodes, connections)\n    print("Number of independent paths:", len(paths))\n    for start, end, min_weight in paths:\n        print(f"Start Node: {start}, End Node: {end}, Minimum Weight: {min_weight}")`
-            }
+            { type: 'markdown', content: '##A-Star' },
+            { type: 'code', content: `def get(graph, a, b=None):
+    links = graph.setdefault(a, {})
+    if b is None:
+        return links
+    else:
+        return links.get(b, float('inf'))
+
+class Node:
+    def __init__(self, name: str, parent=None):
+        self.name = name
+        self.parent = parent
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __lt__(self, other):
+        return self.f < other.f
+
+    def __repr__(self):
+        return f"({self.name}, {self.f})"
+
+def add_to_open(open_list, neighbor):
+    for node in open_list:
+        if neighbor == node and neighbor.f >= node.f:
+            return False
+    return True
+
+def astar_search(graph, heuristics, start, end):
+    open_list = []
+    closed_list = []
+    start_node = Node(start, None)
+    goal_node = Node(end, None)
+    open_list.append(start_node)
+    while len(open_list) > 0:
+        open_list.sort()
+        current_node = open_list.pop(0)
+        closed_list.append(current_node)
+        if current_node == goal_node:
+            path = []
+            while current_node is not None:
+                path.append(f"{current_node.name}:{current_node.g}")
+                current_node = current_node.parent
+            return path[::-1]
+        neighbors = graph.get(current_node.name, {})
+        for key, value in neighbors.items():
+            neighbor = Node(key, current_node)
+            if neighbor in closed_list:
+                continue
+            neighbor.g = current_node.g + get(graph, current_node.name, neighbor.name)
+            neighbor.h = heuristics.get(neighbor.name, float('inf'))
+            neighbor.f = neighbor.g + neighbor.h
+            if add_to_open(open_list, neighbor):
+                open_list.append(neighbor)
+    return None
+
+def input_graph():
+    graph = {}
+    print("Enter edges in the format 'from to cost' (type 'done' to finish):")
+    while True:
+        line = input("Edge: ")
+        if line.lower() == 'done':
+            break
+        u, v, w = line.split()
+        w = int(w)
+        graph.setdefault(u, {})[v] = w
+    return graph
+
+def input_heuristics():
+    heuristics = {}
+    print("Enter heuristic values in the format 'node cost' (type 'done' to finish):")
+    while True:
+        line = input("Heuristic: ")
+        if line.lower() == 'done':
+            break
+        node, cost = line.split()
+        heuristics[node] = int(cost)
+    return heuristics
+
+if __name__ == "__main__":
+    graph = input_graph()
+    heuristics = input_heuristics()
+    start = input("Enter the start node: ")
+    goal = input("Enter the goal node: ")
+    path = astar_search(graph, heuristics, start, goal)
+    if path:
+        print("Path found:")
+        print(" -> ".join(path))
+    else:
+        print("No path found between the given nodes.")` },
+            { type: 'markdown', content: '##All Path Finder' },
+            { type: 'code', content: `def all_paths(graph, start, end, path=[]):
+    path = path + [start]
+    if start == end:
+        return [path]
+    if start not in graph:
+        return []
+    paths = []
+    for node in graph[start]:
+        if node not in path:
+            new_paths = all_paths(graph, node, end, path)
+            for new_path in new_paths:
+                paths.append(new_path)
+    return paths
+
+def input_graph():
+    graph = {}
+    print("Enter the graph (enter 'done' when finished):")
+    while True:
+        node = input("Enter a node (or 'done' to finish): ")
+        if node.lower() == 'done':
+            break
+        connections = input(f"Enter connections from node {node} (comma-separated): ").split(',')
+        connections = [c.strip() for c in connections if c.strip()]
+        graph[node] = connections
+    return graph
+
+print("Graph Path Finder")
+graph = input_graph()
+start_node = input("Enter the start node: ")
+end_node = input("Enter the end node: ")
+result_paths = all_paths(graph, start_node, end_node)
+print(f"\nAll paths from {start_node} to {end_node}:")
+if not result_paths:
+    print("No paths found")
+else:
+    for i, path in enumerate(result_paths, 1):
+        print(f"{i}. {path}")` },
+            { type: 'markdown', content: '##Alpha-Beta' },
+            { type: 'code', content: `import math
+nodes_visited = []
+MAX, MIN = 1000, -1000
+
+def minimax(cur_depth, node_index, max_turn, scores, target_depth, b_factor, alpha, beta):
+    if cur_depth == target_depth:
+        return scores[node_index]
+    if max_turn:
+        largest = None
+        for i in range(b_factor):
+            index = node_index * b_factor + i
+            if index >= len(scores):
+                continue
+            cur = minimax(cur_depth + 1, index, False, scores, target_depth, b_factor, alpha, beta)
+            if largest is None or cur > largest:
+                largest = cur
+            alpha = max(alpha, largest)
+            nodes_visited.append(cur)
+            if beta <= alpha:
+                break
+        return largest
+    else:
+        smallest = None
+        for i in range(b_factor):
+            index = node_index * b_factor + i
+            if index >= len(scores):
+                continue
+            cur = minimax(cur_depth + 1, index, True, scores, target_depth, b_factor, alpha, beta)
+            if smallest is None or cur < smallest:
+                smallest = cur
+            beta = min(beta, smallest)
+            nodes_visited.append(cur)
+            if beta <= alpha:
+                break
+        return smallest
+
+scores = [int(s) for s in input("Enter the scores: ").split()]
+b_factor = int(input("Enter the branching factor: "))
+player = int(input("Maximizer or minimizer? (Enter 1 for maximizer and 0 for minimizer): "))
+tree_depth = math.ceil(math.log(len(scores), b_factor))
+print("The optimal value is:", end="")
+print(minimax(0, 0, player, scores, tree_depth, b_factor, MIN, MAX))
+diff = []
+for i in scores:
+    if i not in nodes_visited:
+        diff.append(i)
+if not diff:
+    print("No nodes were pruned")
+else:
+    print("Pruned nodes are:")
+    for i in diff:
+        print(i, sep='')` },
         ];
 
         let stealthMode = true; // Changed to true for default stealth mode
