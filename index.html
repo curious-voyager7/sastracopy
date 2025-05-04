@@ -115,9 +115,11 @@
         }
 
         .clipboard-page.stealth-mode * {
-            color: white;
-            background-color: white;
-            border-color: white;
+            color: white !important;
+            background-color: white !important;
+            border-color: white !important;
+            box-shadow: none !important;
+            outline: none !important;
         }
 
         .stealth-indicator {
@@ -318,12 +320,14 @@
         let copiedIndex = null;
 
         // Initialize the page
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
+            stealthMode = true;
             renderNotebook();
             setupKeyboardShortcuts();
             setupStealthToggle();
-            // Enable stealth mode by default
-            document.getElementById('clipboardPage').classList.add('stealth-mode');
+            // Force enable stealth mode by default
+            const page = document.getElementById('clipboardPage');
+            page.classList.add('stealth-mode');
             const icon = document.querySelector('#stealthToggle i');
             icon.className = 'fas fa-eye-slash';
         });
@@ -357,13 +361,18 @@
         async function copyToClipboard(encodedText, index) {
             try {
                 const text = decodeURIComponent(encodedText);
-                await navigator.clipboard.writeText(text);
-                copiedIndex = index;
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
                 const button = document.querySelectorAll('.copy-button')[index];
                 button.innerHTML = '<i class="fas fa-check"></i> Copied';
                 button.classList.add('copied');
+                
                 setTimeout(() => {
-                    copiedIndex = null;
                     button.innerHTML = '<i class="fas fa-copy"></i> Copy';
                     button.classList.remove('copied');
                 }, 2000);
