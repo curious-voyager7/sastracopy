@@ -333,8 +333,8 @@
 
         function renderNotebook() {
             const notebookElement = document.getElementById('notebook');
-            notebookElement.innerHTML = notebookData.map((cell, index) => `
-                <div class="cell ${cell.type}-cell">
+            notebookElement.innerHTML = notebookData.map((cell, index) => 
+                `<div class="cell ${cell.type}-cell">
                     ${cell.type === 'markdown' 
                         ? `<div class="markdown-content">${cell.content}</div>`
                         : `<div class="code-cell">
@@ -343,9 +343,9 @@
                                     <i class="fas fa-${expandedCodes[index] ? 'chevron-down' : 'chevron-right'}"></i>
                                     <span>Python</span>
                                 </div>
-                                <button class="copy-button" onclick="copyToClipboard('${encodeURIComponent(cell.content)}', ${index})">
-                                    <i class="fas fa-${copiedIndex === index ? 'check' : 'copy'}"></i>
-                                    ${copiedIndex === index ? 'Copied' : 'Copy'}
+                                <button class="copy-button" data-index="${index}">
+                                    <i class="fas fa-copy"></i>
+                                    Copy
                                 </button>
                             </div>
                             ${expandedCodes[index] ? `
@@ -353,107 +353,75 @@
                             ` : ''}
                         </div>`
                     }
-                </div>
-            `).join('');
+                </div>`
+            ).join('');
+
+            // Add click event listeners to copy buttons
+            document.querySelectorAll('.copy-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const content = notebookData[index].content;
+                    copyToClipboard(encodeURIComponent(content), this);
+                });
+            });
         }
 
-        async function copyToClipboard(encodedText, index) {
+        async function copyToClipboard(encodedText, buttonElement) {
+            if (!buttonElement) {
+                console.error('Button element not found');
+                return;
+            }
+
             const text = decodeURIComponent(encodedText);
             let success = false;
 
-            // Update button state immediately for user feedback
-            const button = document.querySelectorAll('.copy-button')[index];
-            
-            // Try multiple copy methods
             try {
                 // Method 1: Modern Clipboard API
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
                     success = true;
-                } else {
-                    // Method 2: execCommand with textarea
+                }
+
+                // Method 2: execCommand with textarea
+                if (!success) {
                     const textArea = document.createElement('textarea');
                     textArea.value = text;
                     textArea.style.position = 'fixed';
-                    textArea.style.left = '-999999px';
-                    textArea.style.top = '-999999px';
+                    textArea.style.opacity = '0';
                     document.body.appendChild(textArea);
                     textArea.focus();
                     textArea.select();
                     
                     try {
                         success = document.execCommand('copy');
-                        textArea.remove();
                     } catch (err) {
-                        textArea.remove();
-                        // Method 3: ClipboardItem API
-                        if (navigator.clipboard && navigator.clipboard.write) {
-                            const type = "text/plain";
-                            const blob = new Blob([text], { type });
-                            const data = [new ClipboardItem({ [type]: blob })];
-                            await navigator.clipboard.write(data);
-                            success = true;
-                        }
+                        console.error('execCommand failed:', err);
                     }
+                    document.body.removeChild(textArea);
                 }
 
-                // Method 4: Fallback for older browsers using selection
+                // Method 3: Fallback to manual copy
                 if (!success) {
-                    const range = document.createRange();
-                    const selection = window.getSelection();
-                    const tempElement = document.createElement('div');
-                    tempElement.textContent = text;
-                    tempElement.style.position = 'fixed';
-                    tempElement.style.left = '-999999px';
-                    document.body.appendChild(tempElement);
-                    
-                    range.selectNodeContents(tempElement);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    success = document.execCommand('copy');
-                    selection.removeAllRanges();
-                    document.body.removeChild(tempElement);
+                    const response = window.prompt('Copy failed. Please copy the text manually:', text);
+                    success = response !== null;
                 }
 
-                // Update UI based on success
+                // Update button state
                 if (success) {
-                    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                    button.classList.add('copied');
-                    // Store the copied text in a data attribute as another fallback
-                    button.setAttribute('data-clipboard-text', text);
-                } else {
-                    // Final fallback: Show manual copy dialog
-                    const manualCopy = window.prompt('Copy failed. Please copy the text manually:', text);
-                    if (manualCopy !== null) {
-                        button.innerHTML = '<i class="fas fa-check"></i> Text Shown';
-                        button.classList.add('copied');
-                    }
+                    const originalContent = buttonElement.innerHTML;
+                    buttonElement.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    buttonElement.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        buttonElement.innerHTML = originalContent;
+                        buttonElement.classList.remove('copied');
+                    }, 2000);
                 }
             } catch (err) {
                 console.error('Copy failed:', err);
-                // Show manual copy dialog as last resort
-                const manualCopy = window.prompt('Automatic copy failed. Please copy the text manually:', text);
-                if (manualCopy !== null) {
-                    button.innerHTML = '<i class="fas fa-check"></i> Text Shown';
-                    button.classList.add('copied');
-                }
+                window.prompt('Automatic copy failed. Please copy the text manually:', text);
             }
-
-            // Reset button state after delay
-            setTimeout(() => {
-                button.innerHTML = '<i class="fas fa-copy"></i> Copy';
-                button.classList.remove('copied');
-            }, 2000);
         }
-
-        // Add clipboard event listeners for better copy handling
-        document.addEventListener('copy', (e) => {
-            const activeButton = document.querySelector('.copy-button.copied');
-            if (activeButton && activeButton.hasAttribute('data-clipboard-text')) {
-                e.clipboardData.setData('text/plain', activeButton.getAttribute('data-clipboard-text'));
-                e.preventDefault();
-            }
-        });
 
         function toggleCodeExpansion(index) {
             expandedCodes[index] = !expandedCodes[index];
