@@ -22,7 +22,6 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        /* ... rest of the CSS from Clipboard.css ... */
         .clipboard-container h1 {
             text-align: center;
             margin-bottom: 30px;
@@ -359,27 +358,102 @@
         }
 
         async function copyToClipboard(encodedText, index) {
+            const text = decodeURIComponent(encodedText);
+            let success = false;
+
+            // Update button state immediately for user feedback
+            const button = document.querySelectorAll('.copy-button')[index];
+            
+            // Try multiple copy methods
             try {
-                const text = decodeURIComponent(encodedText);
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                const button = document.querySelectorAll('.copy-button')[index];
-                button.innerHTML = '<i class="fas fa-check"></i> Copied';
-                button.classList.add('copied');
-                
-                setTimeout(() => {
-                    button.innerHTML = '<i class="fas fa-copy"></i> Copy';
-                    button.classList.remove('copied');
-                }, 2000);
+                // Method 1: Modern Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    success = true;
+                } else {
+                    // Method 2: execCommand with textarea
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                        success = document.execCommand('copy');
+                        textArea.remove();
+                    } catch (err) {
+                        textArea.remove();
+                        // Method 3: ClipboardItem API
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            const type = "text/plain";
+                            const blob = new Blob([text], { type });
+                            const data = [new ClipboardItem({ [type]: blob })];
+                            await navigator.clipboard.write(data);
+                            success = true;
+                        }
+                    }
+                }
+
+                // Method 4: Fallback for older browsers using selection
+                if (!success) {
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    const tempElement = document.createElement('div');
+                    tempElement.textContent = text;
+                    tempElement.style.position = 'fixed';
+                    tempElement.style.left = '-999999px';
+                    document.body.appendChild(tempElement);
+                    
+                    range.selectNodeContents(tempElement);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    success = document.execCommand('copy');
+                    selection.removeAllRanges();
+                    document.body.removeChild(tempElement);
+                }
+
+                // Update UI based on success
+                if (success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    button.classList.add('copied');
+                    // Store the copied text in a data attribute as another fallback
+                    button.setAttribute('data-clipboard-text', text);
+                } else {
+                    // Final fallback: Show manual copy dialog
+                    const manualCopy = window.prompt('Copy failed. Please copy the text manually:', text);
+                    if (manualCopy !== null) {
+                        button.innerHTML = '<i class="fas fa-check"></i> Text Shown';
+                        button.classList.add('copied');
+                    }
+                }
             } catch (err) {
-                console.error('Failed to copy text: ', err);
+                console.error('Copy failed:', err);
+                // Show manual copy dialog as last resort
+                const manualCopy = window.prompt('Automatic copy failed. Please copy the text manually:', text);
+                if (manualCopy !== null) {
+                    button.innerHTML = '<i class="fas fa-check"></i> Text Shown';
+                    button.classList.add('copied');
+                }
             }
+
+            // Reset button state after delay
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                button.classList.remove('copied');
+            }, 2000);
         }
+
+        // Add clipboard event listeners for better copy handling
+        document.addEventListener('copy', (e) => {
+            const activeButton = document.querySelector('.copy-button.copied');
+            if (activeButton && activeButton.hasAttribute('data-clipboard-text')) {
+                e.clipboardData.setData('text/plain', activeButton.getAttribute('data-clipboard-text'));
+                e.preventDefault();
+            }
+        });
 
         function toggleCodeExpansion(index) {
             expandedCodes[index] = !expandedCodes[index];
