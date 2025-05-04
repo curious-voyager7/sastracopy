@@ -313,7 +313,7 @@
             }
         ];
 
-        let stealthMode = false;
+        let stealthMode = true; // Changed to true for default stealth mode
         let expandedCodes = {};
         let copiedIndex = null;
 
@@ -322,6 +322,10 @@
             renderNotebook();
             setupKeyboardShortcuts();
             setupStealthToggle();
+            // Enable stealth mode by default
+            document.getElementById('clipboardPage').classList.add('stealth-mode');
+            const icon = document.querySelector('#stealthToggle i');
+            icon.className = 'fas fa-eye-slash';
         });
 
         function renderNotebook() {
@@ -350,16 +354,22 @@
             `).join('');
         }
 
-        function copyToClipboard(encodedText, index) {
-            const text = decodeURIComponent(encodedText);
-            navigator.clipboard.writeText(text).then(() => {
+        async function copyToClipboard(encodedText, index) {
+            try {
+                const text = decodeURIComponent(encodedText);
+                await navigator.clipboard.writeText(text);
                 copiedIndex = index;
-                renderNotebook();
+                const button = document.querySelectorAll('.copy-button')[index];
+                button.innerHTML = '<i class="fas fa-check"></i> Copied';
+                button.classList.add('copied');
                 setTimeout(() => {
                     copiedIndex = null;
-                    renderNotebook();
+                    button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                    button.classList.remove('copied');
                 }, 2000);
-            });
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
         }
 
         function toggleCodeExpansion(index) {
